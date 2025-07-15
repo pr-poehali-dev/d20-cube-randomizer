@@ -72,6 +72,44 @@ const Index = () => {
     }, 800);
   };
 
+  const rollAllDice = () => {
+    const rollingDice = diceList.filter(d => d.isRolling);
+    if (rollingDice.length > 0) return;
+
+    // Start rolling animation for all dice
+    setDiceList(prev => prev.map(d => ({ ...d, isRolling: true })));
+
+    // Simulate rolling animation
+    setTimeout(() => {
+      const newResults: DiceResult[] = [];
+      
+      setDiceList(prev => prev.map(d => {
+        const maxValue = d.type === 'd6' ? 6 : 20;
+        const newValue = Math.floor(Math.random() * maxValue) + 1;
+        const isCritical = (d.type === 'd6' && newValue === 6) || 
+                          (d.type === 'd20' && (newValue === 1 || newValue === 20));
+
+        // Add to results
+        newResults.push({
+          id: Date.now().toString() + d.id,
+          type: d.type,
+          value: newValue,
+          timestamp: new Date(),
+          isCritical
+        });
+
+        return { ...d, value: newValue, isRolling: false };
+      }));
+
+      // Add all results to history
+      setRollHistory(prev => [...newResults, ...prev.slice(0, 20 - newResults.length)]);
+    }, 800);
+  };
+
+  const removeAllDice = () => {
+    setDiceList([{ id: Date.now().toString(), type: 'd20', value: 20, isRolling: false }]);
+  };
+
   const renderDiceFace = (dice: Dice) => {
     const size = dice.type === 'd6' ? 'w-20 h-20' : 'w-24 h-24';
     const textSize = dice.type === 'd6' ? 'text-2xl' : 'text-3xl';
@@ -128,6 +166,26 @@ const Index = () => {
                 {renderDiceFace(dice)}
               </div>
             ))}
+          </div>
+
+          {/* Roll All Controls */}
+          <div className="flex gap-4 justify-center mb-4">
+            <Button 
+              onClick={rollAllDice}
+              className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground"
+              disabled={diceList.some(d => d.isRolling)}
+            >
+              <Icon name="Dices" size={16} />
+              Бросить все кубики
+            </Button>
+            <Button 
+              onClick={removeAllDice}
+              variant="destructive"
+              className="flex items-center gap-2"
+            >
+              <Icon name="Trash2" size={16} />
+              Убрать все кубики
+            </Button>
           </div>
 
           {/* Add Dice Controls */}
